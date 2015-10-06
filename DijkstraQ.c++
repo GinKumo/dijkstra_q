@@ -43,13 +43,18 @@ tuple<int, int, int> dijkstraq_read3 (const string& s) {
 // dijkstraq_solve
 // -------------
 
+#define N_CONN 0
+#define N_WGHT 1
+#define N_IDX  2
+#define N_VIS  3
+
 typedef std::tuple<int, int, int, int> quadruple_t;
 
 class my_lessthan  {
 public:
     bool operator() (const quadruple_t& a, const quadruple_t& b) const
     {
-        return get<1>(a) > get<1>(b);
+        return get<N_WGHT>(a) > get<N_WGHT>(b);
         return false;
     }
 };
@@ -66,16 +71,15 @@ void dijkstraq_solve (istream& r, ostream& w) {
         for (int i = 0; i < n && getline(r, s); ++i) {
             tie(a_i, b_i, w_i) = dijkstraq_read3(s);
             // make sure input is well formed and nodes aren't out of bounds
-            assert(a_i >= 1);
-            assert(a_i <= m);
-            assert(b_i >= 1);
-            assert(b_i <= m);
+            //assert(a_i >= 1);
+            //assert(a_i <= m);
+            //assert(b_i >= 1);
+            //assert(b_i <= m);
             // insert edge into graph
             g[a_i].push_back(pair<int, int>(b_i, w_i));
             g[b_i].push_back(pair<int, int>(a_i, w_i));
         }
         // print graph
-        
         /*for (auto i: g) {
             cerr << i.first << " [";
             for (auto j: i.second) {
@@ -107,7 +111,7 @@ void dijkstraq_solve (istream& r, ostream& w) {
 // ------------
 
 //vector<int> dijkstraq_eval (int src, int dst, map<int, vector< pair<int, int> > >& g)
-vector<int> dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >& g)
+vector<int>& dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >& g)
 {
     vector<quadruple_t > ninfo(dst+1);
     //map<int, quadruple_t> ninfo;
@@ -115,53 +119,54 @@ vector<int> dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >&
     std::priority_queue<quadruple_t&, std::vector<quadruple_t>, my_lessthan> q;
 
     for (int i=0;i<=dst;++i) {
-        get<0>(ninfo[i]) = 0;
-        get<1>(ninfo[i]) = INT_MAX;
-        get<2>(ninfo[i]) = i;
-        get<3>(ninfo[i]) = 0;
+        get<N_CONN>(ninfo[i]) = 0;
+        get<N_WGHT>(ninfo[i]) = INT_MAX;
+        get<N_IDX>(ninfo[i]) = i;
+        get<N_VIS>(ninfo[i]) = false;
     }
-    get<0>(ninfo[src]) = src;
-    get<1>(ninfo[src]) = 0;
+    get<N_CONN>(ninfo[src]) = src;
+    get<N_WGHT>(ninfo[src]) = 0;
     q.push(ninfo[src]);
     while (!q.empty()) {
         quadruple_t cur = q.top();
         q.pop();
-        int& curnode = get<2>(cur);
-        int& curdist = get<1>(cur);
+        int& curnode = get<N_IDX>(cur);
+        int& curdist = get<N_WGHT>(cur);
 
-        if (curdist < get<1>(ninfo[curnode]) || (get<3>(ninfo[curnode]))) {
+        if (curdist < get<N_WGHT>(ninfo[curnode]) || (get<N_VIS>(ninfo[curnode]))) {
             continue;
         }
 
         for (auto& cn: g[curnode]) {
             // cn has (dest_node, dist from curnode to dest_node)
             int& dest_node = cn.first;
-            if (get<3>(ninfo[dest_node])) {
+            if (get<N_VIS>(ninfo[dest_node])) {
                 continue;
             }
             quadruple_t& cn_info = ninfo[dest_node];
-            int& cn_dist = get<1>(cn_info);
+            int& cn_dist = get<N_WGHT>(cn_info);
             // look for a new lower distance to desination node
             if (curdist + cn.second < cn_dist) {
                 cn_dist = curdist + cn.second;
-                get<0>(cn_info) = curnode;
+                get<N_CONN>(cn_info) = curnode;
                 if (dest_node != dst) {
                     q.push(cn_info);
                 }
             }
         }
-        get<3>(ninfo[curnode]) = 1;
+        get<N_VIS>(ninfo[curnode]) = true;
     }
     //cout << q.empty() << endl;
 
-    vector<int> ret;
-    if (get<0>(ninfo[dst]) == 0) {
+    static vector<int> ret(128);
+    ret.resize(0);
+    if (get<N_CONN>(ninfo[dst]) == 0) {
         ret.push_back(-1);
     } else {
         auto& curidx = dst;
         while (curidx != src) {
             ret.push_back(curidx);
-            curidx =  get<0>(ninfo[curidx]);
+            curidx =  get<N_CONN>(ninfo[curidx]);
         }
         ret.push_back(curidx);
     }
