@@ -46,16 +46,15 @@ tuple<int, int, int> dijkstraq_read3 (const string& s) {
 #define N_CONN 0
 #define N_WGHT 1
 #define N_IDX  2
-#define N_VIS  3
+#define N_VIS  2
 
-typedef std::tuple<int, int, int, int> quadruple_t;
+typedef std::tuple<int, int, int> quadruple_t;
 
 class my_lessthan  {
 public:
-    bool operator() (const quadruple_t& a, const quadruple_t& b) const
+    inline bool operator() (const quadruple_t& a, const quadruple_t& b) const
     {
         return get<N_WGHT>(a) > get<N_WGHT>(b);
-        return false;
     }
 };
 
@@ -122,7 +121,7 @@ vector<int>& dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >
         get<N_CONN>(ninfo[i]) = 0;
         get<N_WGHT>(ninfo[i]) = INT_MAX;
         get<N_IDX>(ninfo[i]) = i;
-        get<N_VIS>(ninfo[i]) = false;
+        //get<N_VIS>(ninfo[i]) = false;
     }
     get<N_CONN>(ninfo[src]) = src;
     get<N_WGHT>(ninfo[src]) = 0;
@@ -133,14 +132,19 @@ vector<int>& dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >
         int& curnode = get<N_IDX>(cur);
         int& curdist = get<N_WGHT>(cur);
 
-        if (curdist < get<N_WGHT>(ninfo[curnode]) || (get<N_VIS>(ninfo[curnode]))) {
+        if (/*curdist < get<N_WGHT>(ninfo[curnode]) || */(get<N_VIS>(ninfo[curnode]) < 0)) {
             continue;
         }
 
-        for (auto& cn: g[curnode]) {
+        //for (auto& cn: g[curnode]) {
+        int idx = 0;
+        auto l = g[curnode].size();
+        while (idx < l) {
+            auto& cn = (g[curnode])[idx];
+            ++idx;
             // cn has (dest_node, dist from curnode to dest_node)
             int& dest_node = cn.first;
-            if (get<N_VIS>(ninfo[dest_node])) {
+            if (get<N_VIS>(ninfo[dest_node]) < 0) {
                 continue;
             }
             quadruple_t& cn_info = ninfo[dest_node];
@@ -154,7 +158,7 @@ vector<int>& dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >
                 }
             }
         }
-        get<N_VIS>(ninfo[curnode]) = true;
+        get<N_VIS>(ninfo[curnode]) = -get<N_VIS>(ninfo[curnode]);
     }
     //cout << q.empty() << endl;
 
