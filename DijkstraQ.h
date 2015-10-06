@@ -49,6 +49,8 @@ void dijkstraq_solve (istream& r, ostream& w);
  * @param map containing nodes and their edges with weights
  * @return a vector showing the nodes to travel for the shortest path or [ -1 ] if none.
  */
-vector<int> dijkstraq_eval (int src, int dst, map<int, vector< pair<int, int> > > g);
+//vector<int> dijkstraq_eval (int src, int dst, map<int, vector< pair<int, int> > >& g);
+vector<int> dijkstraq_eval (int src, int dst, vector< vector< pair<int, int> > >& g);
+
 
 #endif /* __DIJKSTRA_Q */

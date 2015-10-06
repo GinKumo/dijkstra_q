@@ -43,13 +43,13 @@ tuple<int, int, int> dijkstraq_read3 (const string& s) {
 // dijkstraq_solve
 // -------------
 
-typedef std::tuple<int, int, int> triple_t;
+typedef std::tuple<int, int, int, int> quadruple_t;
 
 class my_lessthan  {
 public:
-    bool operator() (const triple_t& a, const triple_t& b) const
+    bool operator() (const quadruple_t& a, const quadruple_t& b) const
     {
-        return get<1>(a) < get<1>(b);
+        return get<1>(a) > get<1>(b);
         return false;
     }
 };
@@ -58,9 +58,11 @@ public:
 void dijkstraq_solve (istream& r, ostream& w) {
     string s;
     int m,n,a_i,b_i,w_i;
-    map<int, vector< pair<int, int> > > g;
+    //map<int, vector< pair<int, int> > > g;
+    vector<vector< pair<int, int> > > g;
     while (getline(r, s)) {
         tie(m,n) = dijkstraq_read2(s);
+        g.resize(m+1);
         for (int i = 0; i < n && getline(r, s); ++i) {
             tie(a_i, b_i, w_i) = dijkstraq_read3(s);
             // make sure input is well formed and nodes aren't out of bounds
@@ -104,30 +106,40 @@ void dijkstraq_solve (istream& r, ostream& w) {
 // dijkstraq_eval
 // ------------
 
-vector<int> dijkstraq_eval (int src, int dst, map<int, vector< pair<int, int> > > g)
+//vector<int> dijkstraq_eval (int src, int dst, map<int, vector< pair<int, int> > >& g)
+vector<int> dijkstraq_eval (int src, int dst, vector<vector< pair<int, int> > >& g)
 {
-    vector<triple_t > ninfo(dst+1);
-    std::priority_queue<triple_t, std::vector<triple_t>, my_lessthan> q;
+    vector<quadruple_t > ninfo(dst+1);
+    //map<int, quadruple_t> ninfo;
+
+    std::priority_queue<quadruple_t&, std::vector<quadruple_t>, my_lessthan> q;
 
     for (int i=0;i<=dst;++i) {
         get<0>(ninfo[i]) = 0;
         get<1>(ninfo[i]) = INT_MAX;
         get<2>(ninfo[i]) = i;
+        get<3>(ninfo[i]) = 0;
     }
     get<0>(ninfo[src]) = src;
     get<1>(ninfo[src]) = 0;
-
     q.push(ninfo[src]);
     while (!q.empty()) {
-        triple_t cur = q.top();
+        quadruple_t cur = q.top();
         q.pop();
         int& curnode = get<2>(cur);
         int& curdist = get<1>(cur);
 
-        for (auto cn: g[curnode]) {
+        if (curdist < get<1>(ninfo[curnode]) || (get<3>(ninfo[curnode]))) {
+            continue;
+        }
+
+        for (auto& cn: g[curnode]) {
             // cn has (dest_node, dist from curnode to dest_node)
             int& dest_node = cn.first;
-            triple_t& cn_info = ninfo[dest_node];
+            if (get<3>(ninfo[dest_node])) {
+                continue;
+            }
+            quadruple_t& cn_info = ninfo[dest_node];
             int& cn_dist = get<1>(cn_info);
             // look for a new lower distance to desination node
             if (curdist + cn.second < cn_dist) {
@@ -137,20 +149,22 @@ vector<int> dijkstraq_eval (int src, int dst, map<int, vector< pair<int, int> > 
                     q.push(cn_info);
                 }
             }
-            //q.push(cn_info);
         }
+        get<3>(ninfo[curnode]) = 1;
     }
+    //cout << q.empty() << endl;
 
     vector<int> ret;
     if (get<0>(ninfo[dst]) == 0) {
         ret.push_back(-1);
     } else {
-        auto curidx = dst;
+        auto& curidx = dst;
         while (curidx != src) {
             ret.push_back(curidx);
-            curidx =  abs(get<0>(ninfo[curidx]));
+            curidx =  get<0>(ninfo[curidx]);
         }
         ret.push_back(curidx);
     }
     return ret;
 }
+
